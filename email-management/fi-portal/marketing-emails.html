@@ -278,9 +278,13 @@ document.addEventListener("submit", (event) => event.preventDefault());
     current = e;
     $(".dialog-header .category", backdrop).textContent = e.category;
     $(".dialog-header h2", backdrop).textContent = e.name;
-    const frame = $("iframe", frameBox);
+    // A new frame per open: reusing one that was loaded while hidden can come back blank in some browsers.
+    const previous = $("iframe", frameBox);
+    const frame = document.createElement("iframe");
+    frame.className = previous.className;
+    frame.setAttribute("sandbox", "");
     frame.title = e.name + " preview";
-    frame.srcdoc = previewHtml(e.html);
+    previous.replaceWith(frame);
     const rows = $$(".copy-row", backdrop);
     rows[0].firstElementChild.textContent = e.subject;
     rows[1].firstElementChild.textContent = e.preheader;
@@ -293,6 +297,10 @@ document.addEventListener("submit", (event) => event.preventDefault());
       .join("");
     setDevice(0);
     backdrop.style.display = "";
+    // Load the email only once the dialog is on screen so the frame has a real size.
+    requestAnimationFrame(() => {
+      frame.srcdoc = previewHtml(e.html);
+    });
   };
   const close = () => (backdrop.style.display = "none");
 
